@@ -52,17 +52,37 @@ python pybuilder.py my_script.py --onedir --windowed
 python pybuilder.py my_script.py --onefile -i icon.ico -d ./output
 ```
 
+## 版本说明
+
+每次发布新版本时，源码和 exe 都会带上版本号：
+
+```
+PyBuilder_V1.0/              # V1.0 发布目录
+├── pybuilder_V1.0.py         # 带版本号的源码
+├── PyBuilder_V1.0.exe        # 带版本号的 exe
+├── app_icon.ico
+└── README.md
+
+PyBuilder_V2.0/              # V2.0 发布目录
+├── pybuilder_V2.0.py
+├── PyBuilder_V2.0.exe
+├── app_icon.ico
+└── README.md
+```
+
 ## 项目结构
 
 ```
 PyBuilder/
-├── pybuilder.py         # 主程序（单文件）
-├── PyBuilder.exe        # 打包好的可执行文件
-├── setup_shortcut.py    # 桌面快捷方式创建脚本
-├── app_icon.ico         # 程序图标
-├── app_icon.png         # 图标 PNG
-├── 安装依赖.bat         # 依赖安装脚本
-├── dist/                # 打包输出目录
+├── pybuilder.py             # 主程序源码（版本号在内部）
+├── pybuilder_V1.0.py        # 带版本号的源码副本
+├── PyBuilder_V1.0.exe       # 打包好的可执行文件
+├── setup_shortcut.py        # 桌面快捷方式创建脚本
+├── app_icon.ico             # 程序图标
+├── app_icon.png             # 图标 PNG
+├── 安装依赖.bat             # 依赖安装脚本
+├── .gitignore
+├── dist/                    # 打包输出目录
 └── README.md
 ```
 

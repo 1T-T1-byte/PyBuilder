@@ -1,4 +1,5 @@
-*.exe
+PyBuilder_V*.exe
+PyBuilder.exe
 dist/
 build/
 __pycache__/
