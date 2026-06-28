@@ -550,8 +550,14 @@ class GUI:
         self.log("已重置", "INFO")
 
     def log(self, msg, level="INFO"):
-        self.log_text.insert("end", f"[{level}] {msg}\n")
-        self.log_text.see("end")
+        """线程安全的日志更新"""
+        def _update():
+            self.log_text.insert("end", f"[{level}] {msg}\n")
+            self.log_text.see("end")
+        try:
+            self.root.after(0, _update)
+        except Exception:
+            pass
 
     def run(self):
         self.root.mainloop()
