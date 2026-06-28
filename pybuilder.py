@@ -7,6 +7,7 @@ PyBuilder - Python打包工具（单文件版）
 __version__ = "1.0"
 import os
 import sys
+import argparse
 import subprocess
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
