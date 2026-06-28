@@ -25,8 +25,8 @@ PARAM_GROUPS = [
         ("--onedir",        "目录模式(-D)",   "bool",  "-D",  False, "打包成一个文件夹"),
     ]),
     ("输出设置", [
-        ("--distpath",      "输出目录",        "dir",   "-d",  False, "输出目录（默认./dist）"),
-        ("--workpath",      "工作目录",        "dir",   "-w",  False, "工作目录（默认./build）"),
+        ("--distpath",      "输出目录",        "dir",   "",    False, "输出目录（默认./dist）"),
+        ("--workpath",      "工作目录",        "dir",   "",    False, "工作目录（默认./build）"),
         ("--clean",         "清理缓存(-y)",   "bool",  "-y",  False, "打包前清理build/dist目录"),
     ]),
     ("界面设置", [
