@@ -7,7 +7,6 @@ PyBuilder - Python打包工具（单文件版）
 __version__ = "1.0"
 import os
 import sys
-import argparse
 import subprocess
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
@@ -156,6 +155,44 @@ class Builder:
                 cmd.extend([arg, str(val)])
         return cmd
 
+    def ensure_pyinstaller(self, python_exe):
+        """确保PyInstaller已安装，没有则自动安装"""
+        check = subprocess.run(
+            [python_exe, "-m", "PyInstaller", "--version"],
+            capture_output=True, text=True, timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        if check.returncode == 0:
+            return check.stdout.strip()
+
+        self.log("PyInstaller 未安装，正在自动安装...", "INFO")
+        self.log("请稍候，这可能需要几分钟...", "INFO")
+
+        install = subprocess.run(
+            [python_exe, "-m", "pip", "install", "pyinstaller",
+             "-i", "https://pypi.tuna.tsinghua.edu.cn/simple"],
+            capture_output=True, text=True, timeout=120,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        if install.returncode != 0:
+            self.log("自动安装失败！请手动执行: python -m pip install pyinstaller", "ERROR")
+            err = install.stderr.strip()[:200]
+            if err:
+                self.log(f"详情: {err}", "ERROR")
+            return None
+
+        # 再次验证
+        check2 = subprocess.run(
+            [python_exe, "-m", "PyInstaller", "--version"],
+            capture_output=True, text=True, timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        if check2.returncode == 0:
+            ver = check2.stdout.strip()
+            self.log(f"PyInstaller 已自动安装 (版本: {ver})", "INFO")
+            return ver
+        return None
+
     def run(self, args):
         try:
             # 1. 查找Python解释器
@@ -166,20 +203,11 @@ class Builder:
 
             self.log(f"使用Python: {python_exe}", "INFO")
 
-            # 2. 检查PyInstaller是否可用（静默检查，不弹窗）
-            check_result = subprocess.run(
-                [python_exe, "-m", "PyInstaller", "--version"],
-                capture_output=True, text=True, timeout=10,
-                creationflags=subprocess.CREATE_NO_WINDOW
-            )
-            if check_result.returncode != 0:
-                stderr = check_result.stderr.strip()
-                self.log(f"PyInstaller不可用！请先安装：python -m pip install pyinstaller", "ERROR")
-                if stderr:
-                    self.log(f"详情: {stderr[:200]}", "ERROR")
+            # 2. 确保PyInstaller可用（自动安装）
+            py_ver = self.ensure_pyinstaller(python_exe)
+            if not py_ver:
                 return False
 
-            py_ver = check_result.stdout.strip()
             self.log(f"PyInstaller版本: {py_ver}", "INFO")
 
             # 3. 强制输出到 dist 目录
@@ -556,59 +584,8 @@ def main():
         except Exception:
             pass
 
-    parser = argparse.ArgumentParser(description="PyBuilder - Python打包工具",
-                                     formatter_class=argparse.RawDescriptionHelpFormatter,
-                                     epilog="示例:\n  GUI模式:     python pybuilder.py\n  命令行模式:   python pybuilder.py myscript.py --onefile\n  附加数据(Win): python pybuilder.py -c a.py --add-data \"res;res\"")
-    parser.add_argument("script", nargs="?", help="脚本文件")
-    parser.add_argument("--name", "-n", help="程序名称")
-    parser.add_argument("--onefile", "-F", action="store_true", help="单文件模式")
-    parser.add_argument("--onedir", "-D", action="store_true", help="目录模式")
-    parser.add_argument("--windowed", "-w", action="store_true", help="窗口模式")
-    parser.add_argument("--noconsole", action="store_true", help="无控制台")
-    parser.add_argument("--icon", "-i", help="程序图标")
-    parser.add_argument("--distpath", "-d", help="输出目录")
-    parser.add_argument("--workpath", help="工作目录")
-    parser.add_argument("--clean", "-y", action="store_true", help="清理缓存")
-    parser.add_argument("--add-data", action="append", help="附加数据")
-    parser.add_argument("--add-binary", action="append", help="附加二进制")
-    parser.add_argument("--hidden-import", action="append", help="隐藏导入")
-    parser.add_argument("--exclude-module", action="append", help="排除模块")
-    parser.add_argument("--collect-all", action="append", help="收集全部")
-    parser.add_argument("--copy-metadata", action="append", help="复制元数据")
-    parser.add_argument("--compress", help="压缩级别")
-    parser.add_argument("--upx-dir", help="UPX目录")
-    parser.add_argument("--log-level", choices=["TRACE","DEBUG","INFO","WARN","ERROR","CRITICAL"], default="INFO")
-    parser.add_argument("--key", "-k", help="加密密钥")
-    parser.add_argument("--debug", action="store_true", help="调试模式")
-    parser.add_argument("--version-file", help="版本信息文件")
-    parser.add_argument("--runtime-hook", help="运行时钩子")
-    parser.add_argument("--uac-admin", action="store_true", help="管理员权限")
-    parser.add_argument("--save-config", metavar="FILE", help="保存配置")
-    parser.add_argument("--load-config", metavar="FILE", help="加载配置")
-
-    args = parser.parse_args()
-
-    if args.load_config:
-        with open(args.load_config, encoding="utf-8") as f:
-            cfg = json.load(f)
-        for k, v in cfg.items():
-            setattr(args, k, v)
-        args.load_config = None
-
-    if args.save_config:
-        cfg = {k: v for k, v in vars(args).items() if v is not None and k not in ("save_config", "load_config")}
-        with open(args.save_config, "w", encoding="utf-8") as f:
-            json.dump(cfg, f, indent=2, ensure_ascii=False)
-        print(f"配置已保存: {args.save_config}")
-        return
-
-    # 无脚本参数时启动GUI
-    if not args.script and not args.load_config:
-        GUI().run()
-    else:
-        b = Builder()
-        b.set_callback(lambda msg, lv: print(f"[{lv}] {msg}"))
-        b.run(args)
+    # 启动GUI
+    GUI().run()
 
 
 if __name__ == "__main__":
